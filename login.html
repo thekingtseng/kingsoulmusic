@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登入 · KingSoulMusic</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --ink:#0B0B0F;
+    --gold:#D4A857;
+    --gold-bright:#E9C77B;
+    --paper:#F2EFE9;
+    --muted:#8A8786;
+    --ember:#3A2A12;
+    --line: rgba(212,168,87,0.18);
+    --error:#C75C4A;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  body{
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  body::before{
+    content:"";
+    position: fixed;
+    inset:0;
+    background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(212,168,87,0.10), transparent 60%);
+    pointer-events:none;
+  }
+
+  .card{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width: 380px;
+    margin: 24px;
+    padding: 40px 32px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.015);
+  }
+
+  .seal{
+    width:56px;
+    height:56px;
+    margin: 0 auto 20px;
+    border-radius:50%;
+    border: 1.5px solid var(--gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: radial-gradient(circle at 50% 40%, var(--ember), var(--ink) 75%);
+  }
+  .seal span{
+    font-family:'Cinzel', serif;
+    font-size:18px;
+    font-weight:700;
+    color: var(--gold-bright);
+  }
+
+  h1{
+    font-family:'Cinzel', serif;
+    font-size: 22px;
+    text-align:center;
+    letter-spacing:2px;
+    margin-bottom: 6px;
+  }
+
+  .sub{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    text-align:center;
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  .tabs{
+    display:flex;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    margin-bottom: 24px;
+    overflow:hidden;
+  }
+  .tab{
+    flex:1;
+    padding: 10px;
+    text-align:center;
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    color: var(--muted);
+    background: transparent;
+    border:none;
+    transition: all 0.2s ease;
+  }
+  .tab.active{
+    color: var(--ink);
+    background: var(--gold-bright);
+  }
+
+  label{
+    display:block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing:0.3px;
+  }
+
+  input{
+    width:100%;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--paper);
+    font-size: 14px;
+    font-family:'Inter', sans-serif;
+    transition: border-color 0.2s ease;
+  }
+  input:focus{
+    outline:none;
+    border-color: var(--gold);
+  }
+  input::placeholder{ color: rgba(138,135,134,0.5); }
+
+  button.submit{
+    width:100%;
+    padding: 13px;
+    background: var(--gold-bright);
+    color: var(--ink);
+    border:none;
+    border-radius: 4px;
+    font-family:'Inter', sans-serif;
+    font-size: 14px;
+    font-weight:600;
+    letter-spacing:0.3px;
+    cursor:pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+    margin-top: 4px;
+  }
+  button.submit:hover{ background: var(--gold); }
+  button.submit:active{ transform: scale(0.98); }
+  button.submit:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  .msg{
+    margin-top: 16px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align:center;
+    display:none;
+  }
+  .msg.error{
+    display:block;
+    background: rgba(199,92,74,0.12);
+    border: 1px solid rgba(199,92,74,0.3);
+    color: #E0A89C;
+  }
+  .msg.success{
+    display:block;
+    background: rgba(212,168,87,0.10);
+    border: 1px solid rgba(212,168,87,0.3);
+    color: var(--gold-bright);
+  }
+
+  .back{
+    display:block;
+    text-align:center;
+    margin-top: 24px;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-decoration:none;
+  }
+  .back:hover{ color: var(--gold-bright); }
+
+  form{ display:none; }
+  form.active{ display:block; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="seal"><span>朕</span></div>
+  <h1>KINGSOULMUSIC</h1>
+  <p class="sub">音樂為令，世界為疆</p>
+
+  <div class="tabs">
+    <button class="tab active" id="tabLogin" onclick="switchTab('login')">登入</button>
+    <button class="tab" id="tabSignup" onclick="switchTab('signup')">註冊</button>
+  </div>
+
+  <form id="loginForm" class="active">
+    <label for="loginEmail">Email</label>
+    <input type="email" id="loginEmail" placeholder="you@example.com" required>
+    <label for="loginPass">密碼</label>
+    <input type="password" id="loginPass" placeholder="••••••••" required>
+    <button type="submit" class="submit">登入</button>
+  </form>
+
+  <form id="signupForm">
+    <label for="signupEmail">Email</label>
+    <input type="email" id="signupEmail" placeholder="you@example.com" required>
+    <label for="signupPass">密碼</label>
+    <input type="password" id="signupPass" placeholder="至少 6 個字元" minlength="6" required>
+    <button type="submit" class="submit">建立帳號</button>
+  </form>
+
+  <div class="msg" id="msgBox"></div>
+
+  <a class="back" href="index.html">← 回首頁</a>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://gmxlddmudiuvukyudmeo.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_DUakPRAVbniIRv0xdYkMuA_uzsfQHTL";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  function switchTab(which){
+    document.getElementById('tabLogin').classList.toggle('active', which === 'login');
+    document.getElementById('tabSignup').classList.toggle('active', which === 'signup');
+    document.getElementById('loginForm').classList.toggle('active', which === 'login');
+    document.getElementById('signupForm').classList.toggle('active', which === 'signup');
+    hideMsg();
+  }
+
+  function showMsg(text, type){
+    const box = document.getElementById('msgBox');
+    box.textContent = text;
+    box.className = 'msg ' + type;
+  }
+  function hideMsg(){
+    const box = document.getElementById('msgBox');
+    box.className = 'msg';
+  }
+
+  // check if already logged in
+  (async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      window.location.href = 'dashboard.html';
+    }
+  })();
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMsg();
+    const btn = e.target.querySelector('button');
+    btn.disabled = true; btn.textContent = '登入中…';
+
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPass').value;
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    btn.disabled = false; btn.textContent = '登入';
+
+    if (error) {
+      showMsg(translateError(error.message), 'error');
+    } else {
+      window.location.href = 'dashboard.html';
+    }
+  });
+
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMsg();
+    const btn = e.target.querySelector('button');
+    btn.disabled = true; btn.textContent = '建立中…';
+
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPass').value;
+
+    const { data, error } = await supabase.auth.signUp({ email, password });
+
+    btn.disabled = false; btn.textContent = '建立帳號';
+
+    if (error) {
+      showMsg(translateError(error.message), 'error');
+    } else if (data.session) {
+      // email confirmation disabled -> logged in immediately
+      window.location.href = 'dashboard.html';
+    } else {
+      showMsg('註冊成功！請查看 Email 完成驗證後再登入。', 'success');
+    }
+  });
+
+  function translateError(msg){
+    if (msg.includes('Invalid login credentials')) return 'Email 或密碼錯誤';
+    if (msg.includes('already registered')) return '此 Email 已經註冊過了';
+    if (msg.includes('Password should be')) return '密碼至少需要 6 個字元';
+    if (msg.includes('rate limit')) return '請求太頻繁，請稍後再試';
+    return msg;
+  }
+</script>
+
+</body>
+</html>

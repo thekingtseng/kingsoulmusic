@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KingSoulMusic</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --ink:#0B0B0F;
+    --gold:#D4A857;
+    --gold-bright:#E9C77B;
+    --paper:#F2EFE9;
+    --muted:#8A8786;
+    --ember:#3A2A12;
+    --line: rgba(212,168,87,0.18);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  body{
+    background: var(--ink);
+    color: var(--paper);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  body::before{
+    content:"";
+    position: fixed;
+    inset:0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 0%, rgba(212,168,87,0.10), transparent 60%),
+      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(212,168,87,0.05), transparent 60%);
+    pointer-events:none;
+  }
+
+  .wrap{
+    position:relative;
+    z-index:1;
+    max-width: 520px;
+    margin:0 auto;
+    padding: 64px 28px 56px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .state{
+    text-align:center;
+    padding: 100px 20px;
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    color: var(--muted);
+  }
+
+  .seal{
+    width: 90px; height:90px;
+    margin-bottom: 24px;
+    border-radius:50%;
+    border: 1.5px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    background: radial-gradient(circle at 50% 40%, var(--ember), var(--ink) 75%);
+    box-shadow: 0 0 24px rgba(212,168,87,0.18);
+  }
+  .seal span{
+    font-family:'Cinzel', serif;
+    font-size: 26px;
+    font-weight:700;
+    color: var(--gold-bright);
+  }
+
+  h1{
+    font-family:'Cinzel', serif;
+    font-size: clamp(24px, 6vw, 32px);
+    letter-spacing: 2px;
+    text-align:center;
+  }
+
+  .tagline{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    color: var(--muted);
+    font-size: 17px;
+    margin-top: 10px;
+    text-align:center;
+  }
+
+  .divider{
+    width:1px; height:32px;
+    background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+    margin: 28px 0;
+  }
+
+  .links{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+  }
+
+  .row-link{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    padding: 15px 18px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    text-decoration:none;
+    color: var(--paper);
+    font-size:14.5px;
+    font-weight:500;
+    background: rgba(255,255,255,0.01);
+    transition: border-color 0.25s ease, background 0.25s ease, padding-left 0.25s ease;
+  }
+  .row-link:hover{
+    border-color: var(--gold);
+    background: rgba(212,168,87,0.06);
+    padding-left: 22px;
+  }
+  .row-link .arrow{
+    color: var(--gold);
+    font-family:'Cormorant Garamond', serif;
+    font-size:18px;
+    transition: transform 0.25s ease;
+  }
+  .row-link:hover .arrow{ transform: translateX(4px); }
+
+  footer{
+    margin-top: 40px;
+    text-align:center;
+  }
+  footer .crest-line{
+    width:40px; height:1px;
+    background: var(--gold);
+    margin: 0 auto 14px;
+  }
+  footer p{
+    font-family:'Cormorant Garamond', serif;
+    font-size:13px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap" id="content">
+  <div class="state">讀取中…</div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://gmxlddmudiuvukyudmeo.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_DUakPRAVbniIRv0xdYkMuA_uzsfQHTL";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+  }
+
+  async function render(){
+    const params = new URLSearchParams(window.location.search);
+    const username = (params.get('u') || '').trim().toLowerCase();
+    const content = document.getElementById('content');
+
+    if (!username) {
+      content.innerHTML = '<div class="state">請在網址後面加上 ?u=你的代稱<br>例如：u.html?u=kingsoul</div>';
+      return;
+    }
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', username)
+      .single();
+
+    if (error || !profile) {
+      content.innerHTML = '<div class="state">找不到這個主頁</div>';
+      return;
+    }
+
+    const links = [
+      { url: profile.spotify_url, label: 'Spotify' },
+      { url: profile.youtube_url, label: 'YouTube' },
+      { url: profile.instagram_url, label: 'Instagram' },
+      { url: profile.apple_music_url, label: 'Apple Music' },
+      { url: profile.tiktok_url, label: 'TikTok' },
+      { url: profile.kkbox_url, label: 'KKBOX' },
+    ].filter(l => l.url && l.url.length > 0);
+
+    const linksHtml = links.map(l => `
+      <a class="row-link" href="${escapeHtml(l.url)}" target="_blank" rel="noopener">
+        <span>${escapeHtml(l.label)}</span>
+        <span class="arrow">→</span>
+      </a>
+    `).join('');
+
+    content.innerHTML = `
+      <div class="seal"><span>朕</span></div>
+      <h1>${escapeHtml((profile.display_name || username).toUpperCase())}</h1>
+      <p class="tagline">${escapeHtml(profile.tagline || '')}</p>
+      <div class="divider"></div>
+      <div class="links">
+        ${linksHtml || '<p style="color:var(--muted);text-align:center;font-size:13px;">尚未新增任何連結</p>'}
+      </div>
+      <footer>
+        <div class="crest-line"></div>
+        <p>KingSoulMusic</p>
+      </footer>
+    `;
+  }
+
+  render();
+</script>
+
+</body>
+</html>
